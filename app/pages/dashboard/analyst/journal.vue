@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 max-w-6xl">
+  <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">Trading Journal</h1>
@@ -12,12 +12,10 @@
 
     <!-- Search & Filter -->
     <div class="flex flex-col sm:flex-row gap-3">
-      <div class="join w-full sm:max-w-md">
-        <div class="join-item flex items-center px-3 bg-base-100 border border-base-300 border-r-0">
-          <IconSearch class="w-4 h-4 text-base-content/50"/>
-        </div>
-        <input type="text" placeholder="Search entries..." class="input input-bordered join-item w-full pl-0 focus:outline-none" />
-      </div>
+      <label class="input input-bordered w-full sm:max-w-md flex items-center gap-2">
+        <IconSearch class="w-4 h-4 text-base-content/50" />
+        <input type="text" class="grow" placeholder="Search entries..." />
+      </label>
       <select class="select select-bordered w-full sm:w-auto">
         <option selected>All Tags</option>
         <option>Macro</option>

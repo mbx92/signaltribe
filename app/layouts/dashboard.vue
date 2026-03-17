@@ -8,7 +8,7 @@
         <div class="w-7 h-7 bg-primary rounded flex items-center justify-center">
           <IconChartArrows class="w-4 h-4 text-primary-content"/>
         </div>
-        <span class="font-bold text-primary text-base hidden lg:block">SignalTribe</span>
+        <span class="font-bold text-primary text-base hidden lg:block">{{ appName }}</span>
       </NuxtLink>
 
       <div class="grow"/>
@@ -57,8 +57,8 @@
             <NuxtLink to="/dashboard/user" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
               <IconLayoutDashboard class="w-4 h-4 shrink-0"/> Dashboard
             </NuxtLink>
-            <NuxtLink to="/dashboard/user/signals" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
-              <IconChartLine class="w-4 h-4 shrink-0"/> Signal Feed
+            <NuxtLink to="/dashboard/user/pro-feed" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
+              <IconChartLine class="w-4 h-4 shrink-0"/> Pro Feed
             </NuxtLink>
             <NuxtLink to="/dashboard/user/subscriptions" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
               <IconUsers class="w-4 h-4 shrink-0"/> My Subscriptions
@@ -71,9 +71,6 @@
             <p class="text-xs font-semibold text-base-content/40 uppercase tracking-widest px-3 pb-1">Analyst</p>
             <NuxtLink to="/dashboard/analyst" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
               <IconLayoutDashboard class="w-4 h-4 shrink-0"/> Overview
-            </NuxtLink>
-            <NuxtLink to="/dashboard/analyst/publish" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
-              <IconSend class="w-4 h-4 shrink-0"/> Publish Signal
             </NuxtLink>
             <NuxtLink to="/dashboard/analyst/journal" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
               <IconBook class="w-4 h-4 shrink-0"/> Trading Journal
@@ -102,6 +99,9 @@
             <NuxtLink to="/dashboard/admin/cms" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
               <IconSettings class="w-4 h-4 shrink-0"/> Landing CMS
             </NuxtLink>
+            <NuxtLink to="/dashboard/admin/settings" class="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors" active-class="bg-primary/10 text-primary font-semibold">
+              <IconAdjustments class="w-4 h-4 shrink-0"/> Platform Settings
+            </NuxtLink>
           </template>
         </nav>
 
@@ -119,24 +119,80 @@
       </main>
     </div>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="btm-nav lg:hidden z-50 border-t border-base-300">
-      <NuxtLink to="/dashboard/user" active-class="active text-primary">
-        <IconLayoutDashboard class="w-5 h-5"/>
-        <span class="btm-nav-label text-xs">Home</span>
-      </NuxtLink>
-      <NuxtLink to="/dashboard/user/signals" active-class="active text-primary">
-        <IconChartLine class="w-5 h-5"/>
-        <span class="btm-nav-label text-xs">Signals</span>
-      </NuxtLink>
-      <NuxtLink to="/dashboard/analyst" active-class="active text-primary">
-        <IconSend class="w-5 h-5"/>
-        <span class="btm-nav-label text-xs">Analyst</span>
-      </NuxtLink>
-      <NuxtLink to="/dashboard/admin" active-class="active text-primary">
-        <IconShield class="w-5 h-5"/>
-        <span class="btm-nav-label text-xs">Admin</span>
-      </NuxtLink>
+    <!-- Mobile Bottom Nav (Custom Tailwind Implementation) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-[99] bg-base-100 flex justify-around items-center h-16 lg:hidden border-t border-base-300 pb-0">
+      <!-- User View -->
+      <template v-if="showUserNav && !showAnalystNav && !showAdminNav">
+        <NuxtLink to="/dashboard/user" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconLayoutDashboard class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Dashboard</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/user/pro-feed" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconChartLine class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Pro Feed</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/user/subscriptions" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconUsers class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Subs</span>
+        </NuxtLink>
+        <!-- Switch to Analyst/Admin if applicable -->
+        <NuxtLink v-if="currentUser?.role === 'ANALYST'" to="/dashboard/analyst" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconSend class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Analyst</span>
+        </NuxtLink>
+        <NuxtLink v-if="currentUser?.role === 'ADMIN'" to="/dashboard/admin" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconShield class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Admin</span>
+        </NuxtLink>
+      </template>
+
+      <!-- Analyst View -->
+      <template v-else-if="showAnalystNav">
+        <NuxtLink to="/dashboard/analyst" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconLayoutDashboard class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Overview</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/analyst/journal" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconBook class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Journal</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/analyst/signals" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconChartLine class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Signals</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/analyst/subscribers" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconUsersGroup class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Subs</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/user" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconUser class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">User</span>
+        </NuxtLink>
+      </template>
+
+      <!-- Admin View -->
+      <template v-else-if="showAdminNav">
+        <NuxtLink to="/dashboard/admin" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconLayoutDashboard class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Admin</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/admin/users" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconUserCog class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Users</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/admin/analysts" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconCertificate class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">Analysts</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/admin/cms" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconSettings class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">CMS</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/user" class="flex flex-col items-center justify-center p-2 w-full h-full text-base-content/60" active-class="text-primary bg-primary/10">
+          <IconUser class="w-5 h-5"/>
+          <span class="text-[10px] mt-1 font-medium">User</span>
+        </NuxtLink>
+      </template>
     </nav>
   </div>
 </template>
@@ -151,6 +207,7 @@ import {
   IconLogout,
   IconLayoutDashboard,
   IconChartLine,
+  IconWorld,
   IconUsers,
   IconSend,
   IconBook,
@@ -159,10 +216,14 @@ import {
   IconCertificate,
   IconArrowLeft,
   IconShield,
+  IconAdjustments,
 } from '@tabler/icons-vue'
 
 const router = useRouter()
 const { currentUser, logout, initFromStorage } = useAuth()
+
+const { data: globalSettings } = await useAsyncData('settings', () => $fetch('/api/settings'))
+const appName = computed(() => globalSettings.value?.appName || 'SignalTribe')
 
 onMounted(() => initFromStorage())
 

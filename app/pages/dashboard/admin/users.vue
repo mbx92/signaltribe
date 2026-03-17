@@ -9,16 +9,10 @@
 
     <!-- Filters & actions -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div class="relative w-full md:w-80">
-        <IconSearch
-          class="w-4 h-4 text-base-content/50 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10"
-        />
-        <input
-          type="text"
-          placeholder="Search by name, email, or username..."
-          class="input input-bordered w-full pl-9 pr-3 input-sm"
-        />
-      </div>
+      <label class="input input-sm input-bordered w-full md:w-80 flex items-center gap-2">
+        <IconSearch class="w-4 h-4 text-base-content/50" />
+        <input type="text" class="grow" placeholder="Search by name, email, or username..." />
+      </label>
       <div class="flex flex-wrap gap-2">
         <select class="select select-sm select-bordered w-32">
           <option>All roles</option>

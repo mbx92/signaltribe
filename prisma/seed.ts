@@ -9,6 +9,10 @@ const roleSeeds = [
     description: "Full access to manage users, roles, and system settings.",
   },
   {
+    name: "analyst",
+    description: "Provide trading signals, manage premium subscriptions, and view analysis.",
+  },
+  {
     name: "trader",
     description: "Create strategies, manage portfolios, and execute trades.",
   },
@@ -26,10 +30,28 @@ const userSeeds = [
     role: "admin",
   },
   {
-    email: "analyst@saastrader.local",
-    name: "Strategy Analyst",
-    password: "analyst123",
+    email: "trader@saastrader.local",
+    name: "Active Trader",
+    password: "trader123",
     role: "trader",
+  },
+  {
+    email: "alex@saastrader.local",
+    name: "Alex Crypto",
+    password: "analyst123",
+    role: "analyst",
+  },
+  {
+    email: "sarah@saastrader.local",
+    name: "Sarah FX",
+    password: "analyst123",
+    role: "analyst",
+  },
+  {
+    email: "marcus@saastrader.local",
+    name: "Marcus Macro",
+    password: "analyst123",
+    role: "analyst",
   },
 ];
 
@@ -52,18 +74,24 @@ async function main() {
   }
 
   for (const user of userSeeds) {
+    const roleId = roles[user.role]?.id;
+    if (!roleId) {
+      console.warn(`Role ${user.role} not found for user ${user.email}`);
+      continue;
+    }
+
     await prisma.user.upsert({
       where: { email: user.email },
       update: {
         name: user.name,
         password: hashPassword(user.password),
-        roleId: roles[user.role].id,
+        roleId: roleId,
       },
       create: {
         email: user.email,
         name: user.name,
         password: hashPassword(user.password),
-        roleId: roles[user.role].id,
+        roleId: roleId,
       },
     });
   }

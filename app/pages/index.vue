@@ -1,334 +1,302 @@
 <template>
   <div>
-    <!-- Hero -->
-    <section class="relative overflow-hidden bg-base-100 pt-16 pb-24">
-      <!-- subtle grid bg -->
-      <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px);background-size:48px 48px"></div>
+    <!-- Render loop: render specific section based on block.type -->
+    <template v-for="block in blocks" :key="block.id">
 
-      <div class="relative max-w-7xl mx-auto px-4 text-center">
-        <div class="inline-flex items-center gap-2 badge badge-outline badge-lg mb-8 text-primary border-primary/40 px-4 py-3">
-          <IconSparkles class="w-4 h-4"/>
-          <span class="text-sm font-medium">100% Platform-Verified Signal Statistics</span>
-        </div>
-        <h1 class="text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight mb-6 max-w-4xl mx-auto">
-          Trade with the<br/>
-          <span class="text-primary">Best Analysts</span> in the Market
-        </h1>
-        <p class="text-xl text-base-content/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Subscribe to vetted market analysts, receive real-time trading signals, and study their thinking through detailed journals. Elevate your trading game.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center mb-16">
-          <NuxtLink to="/#analysts" class="btn btn-primary btn-lg px-8 font-semibold">Explore Analysts</NuxtLink>
-          <NuxtLink to="/#how-it-works" class="btn btn-outline btn-lg px-8">How It Works</NuxtLink>
-        </div>
-
-        <!-- Social Proof Numbers -->
-        <div class="grid grid-cols-3 max-w-lg mx-auto divide-x divide-base-300">
-          <div class="px-6">
-            <p class="text-3xl font-extrabold text-primary">12K+</p>
-            <p class="text-sm text-base-content/50 mt-1">Active Traders</p>
+      <!-- Hero Block -->
+      <section v-if="block.type === 'Hero'" class="relative overflow-hidden bg-base-100 pt-16 pb-24">
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px);background-size:48px 48px"></div>
+        <div class="relative max-w-7xl mx-auto px-4 text-center">
+          <div v-if="block.data.badge" class="inline-flex items-center gap-2 badge badge-outline badge-lg mb-8 text-primary border-primary/40 px-4 py-3">
+            <IconSparkles class="w-4 h-4"/>
+            <span class="text-sm font-medium">{{ block.data.badge }}</span>
           </div>
-          <div class="px-6">
-            <p class="text-3xl font-extrabold text-primary">42</p>
-            <p class="text-sm text-base-content/50 mt-1">Pro Analysts</p>
-          </div>
-          <div class="px-6">
-            <p class="text-3xl font-extrabold text-primary">68%</p>
-            <p class="text-sm text-base-content/50 mt-1">Avg Win Rate</p>
+          <h1 class="text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight mb-6 max-w-4xl mx-auto" v-html="block.data.title"></h1>
+          <p class="text-xl text-base-content/60 max-w-2xl mx-auto mb-10 leading-relaxed" v-html="block.data.subtitle"></p>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center mb-16">
+            <NuxtLink v-if="block.data.ctaPrimaryText" :to="block.data.ctaPrimaryLink || '#'" class="btn btn-primary btn-lg px-8 font-semibold">{{ block.data.ctaPrimaryText }}</NuxtLink>
+            <NuxtLink v-if="block.data.ctaSecondaryText" :to="block.data.ctaSecondaryLink || '#'" class="btn btn-outline btn-lg px-8">{{ block.data.ctaSecondaryText }}</NuxtLink>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- How It Works -->
-    <section id="how-it-works" class="py-24 bg-base-200">
-      <div class="max-w-7xl mx-auto px-4">
+      <!-- Stats Block -->
+      <section v-if="block.type === 'Stats'" class="relative -mt-20 mb-20">
+         <!-- Placed overlapping the hero or floating below it depending on order -->
+         <div class="relative max-w-7xl mx-auto px-4 text-center">
+           <div class="grid grid-cols-3 max-w-lg mx-auto divide-x divide-base-300 bg-base-100 rounded-tr-[40px] rounded-bl-[40px] rounded-tl-xl rounded-br-xl shadow-xl shadow-base-300/20 border border-base-200 py-6">
+            <div v-for="(stat, idx) in block.data.items" :key="idx" class="px-6">
+              <p class="text-3xl font-extrabold text-primary">{{ stat.value }}</p>
+              <p class="text-sm text-base-content/50 mt-1">{{ stat.label }}</p>
+            </div>
+          </div>
+         </div>
+      </section>
+
+      <!-- How It Works Block -->
+      <section v-if="block.type === 'HowItWorks'" id="how-it-works" class="py-24 bg-base-200">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-16">
+            <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+            <h2 class="text-4xl font-bold mb-4">{{ block.data.title }}</h2>
+            <p v-if="block.data.subtitle" class="text-base-content/60 max-w-xl mx-auto" v-html="block.data.subtitle"></p>
+          </div>
+          <!-- Hardcoded 3 step process content for simplicity -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="card bg-base-100 border border-base-300">
+              <div class="card-body gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-lg">1</div>
+                <h3 class="text-xl font-bold">Browse & Compare</h3>
+                <p class="text-base-content/60 text-sm leading-relaxed">Explore analyst profiles with platform-verified win rates, total signals, average R:R, and subscriber reviews.</p>
+              </div>
+            </div>
+            <div class="card bg-base-100 border border-base-300">
+              <div class="card-body gap-4">
+                <div class="w-12 h-12 rounded-xl bg-secondary text-secondary-content flex items-center justify-center font-bold text-lg">2</div>
+                <h3 class="text-xl font-bold">Subscribe Monthly</h3>
+                <p class="text-base-content/60 text-sm leading-relaxed">Pick the analyst that fits your trading style and subscribe with a simple monthly plan. Cancel anytime.</p>
+              </div>
+            </div>
+            <div class="card bg-base-100 border border-base-300">
+              <div class="card-body gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-lg">3</div>
+                <h3 class="text-xl font-bold">Get Signals & Journals</h3>
+                <p class="text-base-content/60 text-sm leading-relaxed">Receive instant alerts for new setups. Read in-depth journal entries to understand the thesis behind every trade.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analysts Section -->
+      <section v-if="block.type === 'Analysts'" id="analysts" class="py-24 max-w-7xl mx-auto px-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <div>
+            <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+            <h2 class="text-4xl font-bold">{{ block.data.title }}</h2>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button class="btn btn-sm btn-primary">All</button>
+            <button class="btn btn-sm btn-outline">Crypto</button>
+            <button class="btn btn-sm btn-outline">Forex</button>
+            <button class="btn btn-sm btn-outline">Stocks</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          <!-- Card: Dynamic Analyst -->
+          <div v-for="(analyst, idx) in block.data.analysts" :key="idx" class="card bg-base-100 border border-base-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+            <div class="card-body p-6 gap-0">
+              <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                  <div class="avatar online">
+                    <div class="w-14 h-14 rounded-full"><img :src="analyst.avatar || 'https://i.pravatar.cc/150'" :alt="analyst.name"/></div>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1">
+                      <span class="font-bold text-base">{{ analyst.name }}</span>
+                      <IconDiscountCheckFilled class="w-4 h-4 text-info"/>
+                    </div>
+                    <p class="text-xs text-base-content/50">{{ analyst.subtitle }}</p>
+                  </div>
+                </div>
+                <div class="badge badge-success text-xs font-semibold">{{ analyst.winRate }}</div>
+              </div>
+              <div class="flex gap-2 mb-4 flex-wrap">
+                <span v-for="(tag, tidx) in (analyst.tags || '').split(',').map(t => t.trim()).filter(Boolean)" :key="tidx" class="badge badge-sm badge-ghost">{{ tag }}</span>
+              </div>
+              <p class="text-sm text-base-content/60 leading-relaxed mb-5">{{ analyst.description }}</p>
+              <div class="grid grid-cols-3 gap-2 mb-5">
+                <div class="bg-base-200 rounded p-2 text-center">
+                  <p class="text-xs text-base-content/50">{{ analyst.stat1Label }}</p>
+                  <p class="font-bold text-sm">{{ analyst.stat1Value }}</p>
+                </div>
+                <div class="bg-base-200 rounded p-2 text-center">
+                  <p class="text-xs text-base-content/50">{{ analyst.stat2Label }}</p>
+                  <p class="font-bold text-sm">{{ analyst.stat2Value }}</p>
+                </div>
+                <div class="bg-base-200 rounded p-2 text-center">
+                  <p class="text-xs text-base-content/50">{{ analyst.stat3Label }}</p>
+                  <p class="font-bold text-sm">{{ analyst.stat3Value }}</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
+                <div>
+                   <span class="text-2xl font-extrabold">{{ analyst.price }}</span>
+                   <span class="text-sm text-base-content/40">{{ analyst.priceSuffix }}</span>
+                </div>
+                <div class="flex gap-2">
+                  <button class="btn btn-sm btn-outline">View Profile</button>
+                  <button class="btn btn-sm btn-primary">Subscribe</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+        <div class="text-center mt-10">
+          <button class="btn btn-outline btn-wide">View All Analysts →</button>
+        </div>
+      </section>
+
+      <!-- Features Block -->
+      <section v-if="block.type === 'Features'" class="py-24 bg-base-200 w-full">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-16">
+            <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+            <h2 class="text-4xl font-bold mb-4">{{ block.data.title }}</h2>
+            <p v-if="block.data.subtitle" class="text-base-content/60 max-w-xl mx-auto" v-html="block.data.subtitle"></p>
+          </div>
+          <!-- Hardcoded features for brevity -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card bg-base-100 border border-base-300 p-6">
+              <div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-5">
+                <IconBellRinging class="w-6 h-6"/>
+              </div>
+              <h3 class="font-bold text-lg mb-2">Real-Time Alerts</h3>
+              <p class="text-sm text-base-content/60 leading-relaxed">Receive signals instantly via our platform, Telegram, and email. Never miss a trade setup.</p>
+            </div>
+            <div class="card bg-base-100 border border-base-300 p-6">
+              <div class="w-12 h-12 bg-secondary/20 text-secondary rounded-xl flex items-center justify-center mb-5">
+                <IconBook class="w-6 h-6"/>
+              </div>
+              <h3 class="font-bold text-lg mb-2">Trading Journals</h3>
+              <p class="text-sm text-base-content/60 leading-relaxed">Learn the why behind every trade. Analysts share detailed market analysis and journal entries.</p>
+            </div>
+            <div class="card bg-base-100 border border-base-300 p-6">
+              <div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-5">
+                <IconShieldCheck class="w-6 h-6"/>
+              </div>
+              <h3 class="font-bold text-lg mb-2">Verified Performance</h3>
+              <p class="text-sm text-base-content/60 leading-relaxed">Every signal is tracked automatically. Win rates and stats are calculated by our system — not self-reported.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials Block -->
+      <section v-if="block.type === 'Testimonials'" class="py-24 max-w-7xl mx-auto px-4">
         <div class="text-center mb-16">
-          <p class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Simple Process</p>
-          <h2 class="text-4xl font-bold mb-4">Start trading smarter in 3 steps</h2>
-          <p class="text-base-content/60 max-w-xl mx-auto">No complicated setup. Subscribe, receive signals, and trade.</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="card bg-base-100 border border-base-300">
-            <div class="card-body gap-4">
-              <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-lg">1</div>
-              <h3 class="text-xl font-bold">Browse & Compare</h3>
-              <p class="text-base-content/60 text-sm leading-relaxed">Explore analyst profiles with platform-verified win rates, total signals, average R:R, and subscriber reviews.</p>
-            </div>
-          </div>
-          <div class="card bg-base-100 border border-base-300">
-            <div class="card-body gap-4">
-              <div class="w-12 h-12 rounded-xl bg-secondary text-secondary-content flex items-center justify-center font-bold text-lg">2</div>
-              <h3 class="text-xl font-bold">Subscribe Monthly</h3>
-              <p class="text-base-content/60 text-sm leading-relaxed">Pick the analyst that fits your trading style and subscribe with a simple monthly plan. Cancel anytime.</p>
-            </div>
-          </div>
-          <div class="card bg-base-100 border border-base-300">
-            <div class="card-body gap-4">
-              <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-lg">3</div>
-              <h3 class="text-xl font-bold">Get Signals & Journals</h3>
-              <p class="text-base-content/60 text-sm leading-relaxed">Receive instant alerts for new setups. Read in-depth journal entries to understand the thesis behind every trade.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Analysts Section -->
-    <section id="analysts" class="py-24 max-w-7xl mx-auto px-4">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-        <div>
-          <p class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Our Analysts</p>
-          <h2 class="text-4xl font-bold">Top Performing Analysts</h2>
-        </div>
-        <div class="flex gap-2 flex-wrap">
-          <button class="btn btn-sm btn-primary">All</button>
-          <button class="btn btn-sm btn-outline">Crypto</button>
-          <button class="btn btn-sm btn-outline">Forex</button>
-          <button class="btn btn-sm btn-outline">Stocks</button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Card: Alex Crypto -->
-        <div class="card bg-base-100 border border-base-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-          <div class="card-body p-6 gap-0">
-            <div class="flex items-start justify-between mb-5">
-              <div class="flex items-center gap-3">
-                <div class="avatar online">
-                  <div class="w-14 h-14 rounded-full"><img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Alex"/></div>
-                </div>
-                <div>
-                  <div class="flex items-center gap-1">
-                    <span class="font-bold text-base">Alex Crypto</span>
-                    <IconDiscountCheckFilled class="w-4 h-4 text-info"/>
-                  </div>
-                  <p class="text-xs text-base-content/50">Crypto · Day Trader · 5 yrs</p>
-                </div>
-              </div>
-              <div class="badge badge-success text-xs font-semibold">72% Win</div>
-            </div>
-            <div class="flex gap-2 mb-4 flex-wrap">
-              <span class="badge badge-sm badge-ghost">BTC/USDT</span>
-              <span class="badge badge-sm badge-ghost">ETH/USDT</span>
-              <span class="badge badge-sm badge-ghost">Scalping</span>
-            </div>
-            <p class="text-sm text-base-content/60 leading-relaxed mb-5">High-frequency scalping with clear entry, TP and SL. 3-5 quality setups daily with strict risk rules — never more than 1% per trade.</p>
-            <div class="grid grid-cols-3 gap-2 mb-5">
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Signals/mo</p>
-                <p class="font-bold text-sm">85</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Avg R:R</p>
-                <p class="font-bold text-sm">1:2.4</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Subs</p>
-                <p class="font-bold text-sm">1.2K</p>
-              </div>
-            </div>
-            <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
-              <div>
-                <span class="text-2xl font-extrabold">$49</span>
-                <span class="text-sm text-base-content/40">/month</span>
-              </div>
-              <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline">View Profile</button>
-                <button class="btn btn-sm btn-primary">Subscribe</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: Sarah FX -->
-        <div class="card bg-base-100 border border-base-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-          <div class="card-body p-6 gap-0">
-            <div class="flex items-start justify-between mb-5">
-              <div class="flex items-center gap-3">
-                <div class="avatar online">
-                  <div class="w-14 h-14 rounded-full"><img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Sarah"/></div>
-                </div>
-                <div>
-                  <div class="flex items-center gap-1">
-                    <span class="font-bold text-base">Sarah FX</span>
-                    <IconDiscountCheckFilled class="w-4 h-4 text-info"/>
-                  </div>
-                  <p class="text-xs text-base-content/50">Forex · Swing Trader · 8 yrs</p>
-                </div>
-              </div>
-              <div class="badge badge-success text-xs font-semibold">65% Win</div>
-            </div>
-            <div class="flex gap-2 mb-4 flex-wrap">
-              <span class="badge badge-sm badge-ghost">EUR/USD</span>
-              <span class="badge badge-sm badge-ghost">GBP/USD</span>
-              <span class="badge badge-sm badge-ghost">Swing</span>
-            </div>
-            <p class="text-sm text-base-content/60 leading-relaxed mb-5">Pure price action on major pairs. I look for institutional-level zones and multi-day swing opportunities with well-defined risk.</p>
-            <div class="grid grid-cols-3 gap-2 mb-5">
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Signals/mo</p>
-                <p class="font-bold text-sm">22</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Avg R:R</p>
-                <p class="font-bold text-sm">1:3.1</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Subs</p>
-                <p class="font-bold text-sm">850</p>
-              </div>
-            </div>
-            <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
-              <div>
-                <span class="text-2xl font-extrabold">$35</span>
-                <span class="text-sm text-base-content/40">/month</span>
-              </div>
-              <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline">View Profile</button>
-                <button class="btn btn-sm btn-primary">Subscribe</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: Marcus Trader -->
-        <div class="card bg-base-100 border border-base-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-          <div class="card-body p-6 gap-0">
-            <div class="flex items-start justify-between mb-5">
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="w-14 h-14 rounded-full"><img src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="Marcus"/></div>
-                </div>
-                <div>
-                  <div class="flex items-center gap-1">
-                    <span class="font-bold text-base">Marcus Macro</span>
-                    <IconDiscountCheckFilled class="w-4 h-4 text-info"/>
-                  </div>
-                  <p class="text-xs text-base-content/50">Equities · Position · 12 yrs</p>
-                </div>
-              </div>
-              <div class="badge badge-warning text-xs font-semibold">58% Win</div>
-            </div>
-            <div class="flex gap-2 mb-4 flex-wrap">
-              <span class="badge badge-sm badge-ghost">US Equities</span>
-              <span class="badge badge-sm badge-ghost">Options</span>
-              <span class="badge badge-sm badge-ghost">Macro</span>
-            </div>
-            <p class="text-sm text-base-content/60 leading-relaxed mb-5">1-2 deep research trades per week. Full macro thesis, earnings plays, and options flow analysis for every position trade.</p>
-            <div class="grid grid-cols-3 gap-2 mb-5">
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Signals/mo</p>
-                <p class="font-bold text-sm">8</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Avg R:R</p>
-                <p class="font-bold text-sm">1:4.2</p>
-              </div>
-              <div class="bg-base-200 rounded p-2 text-center">
-                <p class="text-xs text-base-content/50">Subs</p>
-                <p class="font-bold text-sm">2.1K</p>
-              </div>
-            </div>
-            <div class="flex items-center justify-between mt-auto pt-4 border-t border-base-200">
-              <div>
-                <span class="text-2xl font-extrabold">$79</span>
-                <span class="text-sm text-base-content/40">/month</span>
-              </div>
-              <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline">View Profile</button>
-                <button class="btn btn-sm btn-primary">Subscribe</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="text-center mt-10">
-        <button class="btn btn-outline btn-wide">View All 42 Analysts →</button>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="py-24 bg-base-200">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-16">
-          <p class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Why SignalTribe</p>
-          <h2 class="text-4xl font-bold mb-4">Built for serious traders</h2>
+          <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+          <h2 class="text-4xl font-bold">{{ block.data.title }}</h2>
+          <p v-if="block.data.subtitle" class="text-base-content/60 max-w-xl mx-auto mt-4" v-html="block.data.subtitle"></p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="card bg-base-100 border border-base-300 p-6">
-            <div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-5">
-              <IconBellRinging class="w-6 h-6"/>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user1" /></div></div>
+              <div>
+                <p class="font-semibold text-sm">Budi S.</p>
+                <div class="flex text-warning text-xs">★★★★★</div>
+              </div>
             </div>
-            <h3 class="font-bold text-lg mb-2">Real-Time Alerts</h3>
-            <p class="text-sm text-base-content/60 leading-relaxed">Receive signals instantly via our platform, Telegram, and email. Never miss a trade setup.</p>
+            <p class="text-sm text-base-content/60 leading-relaxed">"Alex's crypto signals have been incredible. Consistent setups with clear entries. My win rate jumped from 40% to 65% in two months."</p>
           </div>
           <div class="card bg-base-100 border border-base-300 p-6">
-            <div class="w-12 h-12 bg-secondary/20 text-secondary rounded-xl flex items-center justify-center mb-5">
-              <IconBook class="w-6 h-6"/>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user2" /></div></div>
+              <div>
+                <p class="font-semibold text-sm">Rani P.</p>
+                <div class="flex text-warning text-xs">★★★★★</div>
+              </div>
             </div>
-            <h3 class="font-bold text-lg mb-2">Trading Journals</h3>
-            <p class="text-sm text-base-content/60 leading-relaxed">Learn the why behind every trade. Analysts share detailed market analysis and journal entries.</p>
+            <p class="text-sm text-base-content/60 leading-relaxed">"What I love most is Sarah's journal. I finally understand WHY signals are taken, not just copying blind trades."</p>
           </div>
           <div class="card bg-base-100 border border-base-300 p-6">
-            <div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-5">
-              <IconShieldCheck class="w-6 h-6"/>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user3" /></div></div>
+              <div>
+                <p class="font-semibold text-sm">Kevin M.</p>
+                <div class="flex text-warning text-xs">★★★★☆</div>
+              </div>
             </div>
-            <h3 class="font-bold text-lg mb-2">Verified Performance</h3>
-            <p class="text-sm text-base-content/60 leading-relaxed">Every signal is tracked automatically. Win rates and stats are calculated by our system — not self-reported.</p>
+            <p class="text-sm text-base-content/60 leading-relaxed">"Verified stats are a game changer. I can actually compare analysts objectively instead of trusting screenshots."</p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Testimonials -->
-    <section class="py-24 max-w-7xl mx-auto px-4">
-      <div class="text-center mb-16">
-        <p class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">Testimonials</p>
-        <h2 class="text-4xl font-bold">What traders say about us</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card bg-base-100 border border-base-300 p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user1" /></div></div>
-            <div>
-              <p class="font-semibold text-sm">Budi S.</p>
-              <div class="flex text-warning text-xs">★★★★★</div>
+      <!-- Pricing Block -->
+      <section v-if="block.type === 'Pricing'" class="py-24 bg-base-100 w-full border-t border-base-200">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-16">
+            <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+            <h2 class="text-4xl font-bold mb-4">{{ block.data.title }}</h2>
+            <p v-if="block.data.subtitle" class="text-base-content/60 max-w-xl mx-auto" v-html="block.data.subtitle"></p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center max-w-5xl mx-auto">
+            <div v-for="(plan, idx) in block.data.plans" :key="idx" class="card bg-base-100 border border-base-300 relative" :class="{'shadow-xl ring-2 ring-primary border-primary': plan.isPopular}">
+              <div v-if="plan.isPopular" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 badge badge-primary font-bold px-4 py-3">Most Popular</div>
+              <div class="card-body p-8">
+                <h3 class="text-2xl font-bold mb-2">{{ plan.name }}</h3>
+                <p class="text-base-content/60 text-sm mb-6">{{ plan.description }}</p>
+                <div class="flex items-baseline gap-1 mb-8">
+                  <span class="text-5xl font-extrabold">{{ plan.price }}</span>
+                  <span class="text-base-content/50 font-medium">{{ plan.period }}</span>
+                </div>
+                <button class="btn w-full mb-8 font-bold" :class="plan.isPopular ? 'btn-primary' : 'btn-outline'">{{ plan.cta }}</button>
+                <div class="space-y-4">
+                  <div v-for="(feat, fidx) in (plan.features || '').split(',').map(t=>t.trim()).filter(Boolean)" :key="fidx" class="flex items-center gap-3 text-sm">
+                    <IconShieldCheck class="w-5 h-5 text-success shrink-0"/>
+                    <span>{{ feat }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <p class="text-sm text-base-content/60 leading-relaxed">"Alex's crypto signals have been incredible. Consistent setups with clear entries. My win rate jumped from 40% to 65% in two months."</p>
         </div>
-        <div class="card bg-base-100 border border-base-300 p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user2" /></div></div>
-            <div>
-              <p class="font-semibold text-sm">Rani P.</p>
-              <div class="flex text-warning text-xs">★★★★★</div>
-            </div>
-          </div>
-          <p class="text-sm text-base-content/60 leading-relaxed">"What I love most is Sarah's journal. I finally understand WHY signals are taken, not just copying blind trades."</p>
-        </div>
-        <div class="card bg-base-100 border border-base-300 p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="avatar"><div class="w-10 rounded-full"><img src="https://i.pravatar.cc/150?u=user3" /></div></div>
-            <div>
-              <p class="font-semibold text-sm">Kevin M.</p>
-              <div class="flex text-warning text-xs">★★★★☆</div>
-            </div>
-          </div>
-          <p class="text-sm text-base-content/60 leading-relaxed">"Verified stats are a game changer. I can actually compare analysts objectively instead of trusting screenshots."</p>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- CTA Banner -->
-    <section id="pricing" class="bg-primary text-primary-content py-20">
-      <div class="max-w-3xl mx-auto px-4 text-center">
-        <h2 class="text-4xl font-extrabold mb-4">Ready to trade with an edge?</h2>
-        <p class="opacity-70 text-lg mb-10">Join 12,000+ traders already using SignalTribe to follow the best analysts in the market.</p>
-        <NuxtLink to="/login" class="btn btn-secondary btn-lg px-10 font-bold">Get Started — It's Free</NuxtLink>
-      </div>
-    </section>
+      <!-- FAQ Block -->
+      <section v-if="block.type === 'FAQ'" class="py-24 bg-base-200 w-full">
+        <div class="max-w-4xl mx-auto px-4">
+           <div class="text-center mb-16">
+            <p v-if="block.data.preTitle" class="text-sm font-semibold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+            <h2 class="text-4xl font-bold mb-4">{{ block.data.title }}</h2>
+            <p v-if="block.data.subtitle" class="text-base-content/60 max-w-xl mx-auto" v-html="block.data.subtitle"></p>
+          </div>
+          <div class="space-y-4">
+            <div v-for="(faq, idx) in block.data.faqs" :key="idx" class="collapse collapse-arrow bg-base-100 border border-base-300">
+              <input type="radio" name="my-accordion-faq" :checked="idx === 0" /> 
+              <div class="collapse-title text-lg font-semibold pr-12">
+                {{ faq.question }}
+              </div>
+              <div class="collapse-content text-base-content/70">
+                <p class="leading-relaxed whitespace-pre-line">{{ faq.answer }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Newsletter Block -->
+      <section v-if="block.type === 'Newsletter'" class="py-24 bg-base-100 w-full border-t border-base-200">
+        <div class="max-w-4xl mx-auto px-4">
+          <div class="bg-primary/5 rounded-3xl p-10 md:p-16 border border-primary/20 text-center relative overflow-hidden">
+             <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px);background-size:24px 24px"></div>
+             <div class="relative z-10">
+               <p v-if="block.data.preTitle" class="text-sm font-bold text-primary uppercase tracking-widest mb-3">{{ block.data.preTitle }}</p>
+               <h2 class="text-3xl md:text-5xl font-extrabold mb-6">{{ block.data.title }}</h2>
+               <p class="text-base-content/70 text-lg mb-8 max-w-2xl mx-auto">{{ block.data.subtitle }}</p>
+               <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" @submit.prevent>
+                 <input type="email" placeholder="Enter your email address" class="input input-lg input-bordered w-full" required />
+                 <button type="submit" class="btn btn-primary btn-lg shrink-0">Subscribe</button>
+               </form>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Banner Block -->
+      <section v-if="block.type === 'CTA'" class="bg-primary text-primary-content py-20 w-full">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+          <h2 class="text-4xl font-extrabold mb-4">{{ block.data.title }}</h2>
+          <p class="opacity-70 text-lg mb-10" v-html="block.data.subtitle"></p>
+          <NuxtLink v-if="block.data.ctaText" :to="block.data.ctaLink || '/login'" class="btn btn-secondary btn-lg px-10 font-bold">{{ block.data.ctaText }}</NuxtLink>
+        </div>
+      </section>
+
+    </template>
   </div>
 </template>
 
@@ -342,4 +310,33 @@ import {
 } from '@tabler/icons-vue'
 
 definePageMeta({ layout: 'default' })
+
+// Fetch global settings statically mapped from JSON
+const { data: globalSettings } = await useAsyncData('settings', () => $fetch('/api/settings'))
+
+const blocks = computed(() => {
+  const cmsBlocksJson = globalSettings.value?.cmsBlocks
+  if (cmsBlocksJson) {
+      try {
+        return JSON.parse(cmsBlocksJson)
+      } catch (e) {
+        console.error("Failed to parse cmsBlocks", e)
+      }
+  }
+  
+  // Hardcoded fallback structure to mimic original if nothing is saved
+  return [
+    { type: 'Hero', data: { badge: '100% Platform-Verified Signal Statistics', title: 'Trade with the<br/><span class="text-primary">Best Analysts</span> in the Market', subtitle: 'Subscribe to vetted market analysts, receive real-time trading signals, and study their thinking through detailed journals. Elevate your trading game.', ctaPrimaryText: 'Explore Analysts', ctaPrimaryLink: '/#analysts', ctaSecondaryText: 'How It Works', ctaSecondaryLink: '/#how-it-works' } },
+    { type: 'Stats', data: { items: [{ value: '12K+', label: 'Active Traders'}, { value: '42', label: 'Pro Analysts'}, { value: '68%', label: 'Avg Win Rate'}] } },
+    { type: 'HowItWorks', data: { preTitle: 'Simple Process', title: 'Start trading smarter in 3 steps', subtitle: 'No complicated setup. Subscribe, receive signals, and trade.' } },
+    { type: 'Analysts', data: { preTitle: 'Our Analysts', title: 'Top Performing Analysts', analysts: [{name: 'Alex Crypto', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', subtitle: 'Crypto · Day Trader · 5 yrs', winRate: '72% Win', tags: 'BTC/USDT, ETH/USDT, Scalping', description: 'High-frequency scalping with clear entry, TP and SL. 3-5 quality setups daily with strict risk rules.', stat1Value: '85', stat1Label: 'Signals/mo', stat2Value: '1:2.4', stat2Label: 'Avg R:R', stat3Value: '1.2K', stat3Label: 'Subs', price: '$49', priceSuffix: '/month'}, {name: 'Sarah FX', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', subtitle: 'Forex · Swing Trader · 8 yrs', winRate: '65% Win', tags: 'EUR/USD, GBP/USD, Swing', description: 'Pure price action on major pairs. Institutional-level zones and multi-day swing opportunities metrics.', stat1Value: '22', stat1Label: 'Signals/mo', stat2Value: '1:3.1', stat2Label: 'Avg R:R', stat3Value: '850', stat3Label: 'Subs', price: '$35', priceSuffix: '/month'}] } },
+    { type: 'Features', data: { preTitle: 'Why SignalTribe', title: 'Built for serious traders', subtitle: '' } },
+    { type: 'Testimonials', data: { preTitle: 'Testimonials', title: 'What traders say about us', subtitle: '' } },
+    { type: 'Pricing', data: { preTitle: 'Pricing', title: 'Simple, transparent pricing', subtitle: 'Choose a plan that works best for you.', plans: [{ name: 'Basic', price: '$19', period: '/month', description: 'Perfect for beginners.', features: 'Real-time alerts, Community access, Basic stats', cta: 'Get Started', isPopular: false }, { name: 'Pro', price: '$49', period: '/month', description: 'For serious traders.', features: 'Everything in Basic, Live Journals, Priority support, Portfolio tracker', cta: 'Start Free Trial', isPopular: true }] } },
+    { type: 'FAQ', data: { preTitle: 'FAQ', title: 'Frequently asked questions', subtitle: 'Everything you need to know about the product.', faqs: [{ question: 'Do I get access to all analysts?', answer: 'No, subscriptions are per analyst to ensure they are fairly compensated.' }, { question: 'Can I cancel anytime?', answer: 'Yes, your subscription rolls over monthly and you can turn off auto-renew at any time in your dashboard.' }] } },
+    { type: 'Newsletter', data: { preTitle: 'Newsletter', title: 'Get weekly market insights', subtitle: 'We share our best setups and market reviews every Sunday.' } },
+    { type: 'CTA', data: { title: 'Ready to trade with an edge?', subtitle: 'Join 12,000+ traders already using SignalTribe to follow the best analysts in the market.', ctaText: 'Get Started — It\'s Free', ctaLink: '/login' } }
+  ]
+})
+
 </script>

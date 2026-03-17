@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 max-w-6xl">
+  <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">My Subscribers</h1>
@@ -62,10 +62,10 @@
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body p-0">
         <div class="p-4 border-b border-base-200 flex flex-col sm:flex-row justify-between gap-4">
-          <div class="join">
-            <input type="text" placeholder="Search subscribers..." class="input input-sm input-bordered join-item w-64" />
-            <button class="btn btn-sm btn-ghost join-item border border-base-300"><IconSearch class="w-4 h-4"/></button>
-          </div>
+          <label class="input input-sm input-bordered w-64 flex items-center gap-2">
+            <IconSearch class="w-4 h-4 text-base-content/50" />
+            <input type="text" class="grow" placeholder="Search subscribers..." />
+          </label>
           <select class="select select-sm select-bordered w-full sm:w-auto">
             <option>All Status</option>
             <option>Active</option>
