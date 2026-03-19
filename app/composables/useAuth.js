@@ -2,7 +2,7 @@ export const DEMO_ACCOUNTS = {
   admin: {
     role: 'admin',
     name: 'Admin Master',
-    email: 'admin@signaltribe.com',
+    email: 'admin@saastrader.local',
     password: 'admin123',
     avatar: 'https://i.pravatar.cc/150?u=admin_st1',
     redirect: '/dashboard/admin',
@@ -11,7 +11,7 @@ export const DEMO_ACCOUNTS = {
   analyst: {
     role: 'analyst',
     name: 'Alex Crypto',
-    email: 'alex@signaltribe.com',
+    email: 'alex@saastrader.local',
     password: 'analyst123',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
     redirect: '/dashboard/analyst',
@@ -19,48 +19,68 @@ export const DEMO_ACCOUNTS = {
   },
   user: {
     role: 'user',
-    name: 'Budi S.',
-    email: 'budi@signaltribe.com',
-    password: 'user123',
+    name: 'Active Trader',
+    email: 'trader@saastrader.local',
+    password: 'trader123',
     avatar: 'https://i.pravatar.cc/150?u=user1',
     redirect: '/dashboard/user',
     badge: 'Trader',
   },
 }
 
+const ROLE_REDIRECTS = {
+  admin: '/dashboard/admin',
+  analyst: '/dashboard/analyst',
+  trader: '/dashboard/user',
+  viewer: '/dashboard/user',
+  user: '/dashboard/user',
+}
+
 export const useAuth = () => {
   const currentUser = useState('auth_user', () => null)
 
-  const initFromStorage = () => {
-    if (process.client && !currentUser.value) {
-      try {
-        const stored = localStorage.getItem('st_auth')
-        if (stored) currentUser.value = JSON.parse(stored)
-      } catch {}
+  const fetchUser = async () => {
+    try {
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      const data = await $fetch('/api/auth/me', { headers })
+      if (data) {
+        currentUser.value = data
+      } else {
+        currentUser.value = null
+      }
+    } catch {
+      currentUser.value = null
+    }
+    return currentUser.value
+  }
+
+  const loginByCredentials = async (email, password) => {
+    try {
+      const data = await $fetch('/api/auth/login', {
+        method: 'POST',
+        body: { email, password },
+      })
+      currentUser.value = data
+      return ROLE_REDIRECTS[data.role] || '/dashboard/user'
+    } catch (err) {
+      return null
     }
   }
 
-  const loginByRole = (role) => {
-    const user = DEMO_ACCOUNTS[role]
-    currentUser.value = user
-    if (process.client) localStorage.setItem('st_auth', JSON.stringify(user))
-    return user.redirect
+  const loginByRole = async (role) => {
+    const account = DEMO_ACCOUNTS[role]
+    if (!account) return null
+    return loginByCredentials(account.email, account.password)
   }
 
-  const loginByCredentials = (email, password) => {
-    const match = Object.values(DEMO_ACCOUNTS).find(
-      (u) => u.email === email && u.password === password
-    )
-    if (!match) return null
-    currentUser.value = match
-    if (process.client) localStorage.setItem('st_auth', JSON.stringify(match))
-    return match.redirect
-  }
-
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await $fetch('/api/auth/logout', { method: 'POST' })
+    } catch {}
     currentUser.value = null
-    if (process.client) localStorage.removeItem('st_auth')
   }
 
-  return { currentUser, loginByRole, loginByCredentials, logout, initFromStorage, DEMO_ACCOUNTS }
+  const isLoggedIn = computed(() => !!currentUser.value)
+
+  return { currentUser, loginByRole, loginByCredentials, logout, fetchUser, isLoggedIn, DEMO_ACCOUNTS }
 }

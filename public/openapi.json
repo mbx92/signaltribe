@@ -1,0 +1,912 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SignalTribe API",
+    "version": "1.0.0",
+    "description": "REST API for SignalTribe — a trading signal platform. Authentication is cookie-based (`st_session`). All protected endpoints require an active session obtained from `POST /api/auth/login`.",
+    "contact": {
+      "name": "SignalTribe"
+    }
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local dev" }
+  ],
+  "security": [{ "cookieAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "st_session",
+        "description": "Session cookie set on successful login."
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string", "nullable": true },
+          "avatar": { "type": "string", "nullable": true },
+          "role": { "type": "string", "enum": ["admin", "analyst", "trader", "viewer"] },
+          "analystStatus": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"], "nullable": true }
+        }
+      },
+      "Signal": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "pair": { "type": "string", "example": "BTC/USDT" },
+          "direction": { "type": "string", "enum": ["LONG", "SHORT"] },
+          "entry": { "type": "number" },
+          "tp": { "type": "number", "description": "Take profit" },
+          "sl": { "type": "number", "description": "Stop loss" },
+          "current": { "type": "number", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "TP_HIT", "SL_HIT", "CLOSED", "CANCELLED"] },
+          "timeframe": { "type": "string", "enum": ["M15", "H1", "H4", "D1", "W1"] },
+          "risk": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+          "notes": { "type": "string", "nullable": true },
+          "closedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserRef" }
+        }
+      },
+      "JournalEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] },
+          "views": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserRef" }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "analystId": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE", "EXPIRED", "CANCELLED"] },
+          "priceAtPurchase": { "type": "number" },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "message": { "type": "string" },
+          "read": { "type": "boolean" },
+          "link": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AnalystProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "specialty": { "type": "string", "nullable": true },
+          "experience": { "type": "integer" },
+          "monthlyPrice": { "type": "number" },
+          "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserRef" }
+        }
+      },
+      "ActivityLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string", "nullable": true },
+          "userEmail": { "type": "string", "nullable": true },
+          "action": {
+            "type": "string",
+            "enum": ["LOGIN","LOGOUT","USER_CREATE","USER_UPDATE","USER_DELETE","SIGNAL_CREATE","SIGNAL_UPDATE","SIGNAL_DELETE","JOURNAL_CREATE","JOURNAL_UPDATE","JOURNAL_DELETE","SUBSCRIPTION_CREATE","SUBSCRIPTION_CANCEL","ANALYST_APPROVE","ANALYST_REJECT","SETTINGS_UPDATE"]
+          },
+          "entity": { "type": "string", "nullable": true },
+          "entityId": { "type": "string", "nullable": true },
+          "meta": { "type": "string", "nullable": true, "description": "JSON string of extra context" },
+          "ip": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SystemLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "level": { "type": "string", "enum": ["error", "warn", "info"] },
+          "message": { "type": "string" },
+          "stack": { "type": "string", "nullable": true },
+          "path": { "type": "string", "nullable": true },
+          "userId": { "type": "string", "nullable": true },
+          "meta": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserRef": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "nullable": true },
+          "avatar": { "type": "string", "nullable": true }
+        }
+      },
+      "PaginatedMeta": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "page": { "type": "integer" },
+          "limit": { "type": "integer" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer" },
+          "statusMessage": { "type": "string" }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Not authenticated",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Forbidden": {
+        "description": "Insufficient role permissions",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "BadRequest": {
+        "description": "Validation error",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "parameters": {
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": { "type": "integer", "default": 1 }
+      },
+      "LimitParam": {
+        "name": "limit",
+        "in": "query",
+        "schema": { "type": "integer", "default": 20, "maximum": 100 }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Authentication — login, logout, current session" },
+    { "name": "Signals", "description": "Trading signals published by analysts" },
+    { "name": "Journals", "description": "Analyst journal / analysis posts" },
+    { "name": "Subscriptions", "description": "User subscriptions to analysts" },
+    { "name": "Notifications", "description": "In-app notifications" },
+    { "name": "Settings", "description": "Platform-wide settings (key-value store)" },
+    { "name": "Analysts", "description": "Public analyst profiles and subscriber data" },
+    { "name": "Dashboard", "description": "Role-specific dashboard statistics" },
+    { "name": "Admin — Users", "description": "Admin: manage platform users" },
+    { "name": "Admin — Analysts", "description": "Admin: review and approve analyst applications" },
+    { "name": "Admin — Logs", "description": "Admin: activity audit trail and system error logs" }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "description": "Authenticate with email and password. Sets an `st_session` cookie on success.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "admin@signaltribe.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout",
+        "description": "Clear the session cookie. Logs the action to ActivityLog.",
+        "responses": {
+          "200": {
+            "description": "Logged out",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user",
+        "description": "Returns the currently authenticated user, or `null` if not logged in.",
+        "responses": {
+          "200": {
+            "description": "Current user or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/User" },
+                    { "type": "null" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signals": {
+      "get": {
+        "tags": ["Signals"],
+        "summary": "List signals",
+        "description": "Returns a paginated list of trading signals. Public endpoint.",
+        "security": [],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/LimitParam" },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by signal status",
+            "schema": { "type": "string", "enum": ["ACTIVE", "TP_HIT", "SL_HIT", "CLOSED", "CANCELLED"] }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["LONG", "SHORT"] }
+          },
+          {
+            "name": "analystId",
+            "in": "query",
+            "description": "Filter by analyst user ID",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated signals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedMeta" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "signals": { "type": "array", "items": { "$ref": "#/components/schemas/Signal" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Signals"],
+        "summary": "Create signal",
+        "description": "Publish a new trading signal. Requires `analyst` role. Notifies all active subscribers.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pair", "direction", "entry", "tp", "sl"],
+                "properties": {
+                  "pair": { "type": "string", "example": "ETH/USDT" },
+                  "direction": { "type": "string", "enum": ["LONG", "SHORT"] },
+                  "entry": { "type": "number", "example": 3200.5 },
+                  "tp": { "type": "number", "example": 3500.0 },
+                  "sl": { "type": "number", "example": 3100.0 },
+                  "notes": { "type": "string" },
+                  "timeframe": { "type": "string", "enum": ["M15", "H1", "H4", "D1", "W1"], "default": "H4" },
+                  "risk": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"], "default": "MEDIUM" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created signal", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Signal" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/signals/{id}": {
+      "put": {
+        "tags": ["Signals"],
+        "summary": "Update signal",
+        "description": "Update current price, status, or notes on your own signal. Requires `analyst` role.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current": { "type": "number" },
+                  "status": { "type": "string", "enum": ["ACTIVE", "TP_HIT", "SL_HIT", "CLOSED", "CANCELLED"] },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated signal", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Signal" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Signals"],
+        "summary": "Delete signal",
+        "description": "Delete your own signal. Requires `analyst` role.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/journals": {
+      "get": {
+        "tags": ["Journals"],
+        "summary": "List journal entries",
+        "description": "Returns published journal/analysis posts. Filter by status or analyst.",
+        "security": [],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/LimitParam" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] },
+            "description": "Defaults to PUBLISHED"
+          },
+          { "name": "analystId", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated journals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedMeta" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "journals": { "type": "array", "items": { "$ref": "#/components/schemas/JournalEntry" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Journals"],
+        "summary": "Create journal entry",
+        "description": "Create a new journal entry. Requires `analyst` role.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"], "default": "DRAFT" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created entry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JournalEntry" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/journals/{id}": {
+      "put": {
+        "tags": ["Journals"],
+        "summary": "Update journal entry",
+        "description": "Update your own journal entry. Requires `analyst` role.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated entry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JournalEntry" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Journals"],
+        "summary": "Delete journal entry",
+        "description": "Delete your own journal entry. Requires `analyst` role.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/subscriptions": {
+      "get": {
+        "tags": ["Subscriptions"],
+        "summary": "Get my subscriptions",
+        "description": "Returns all subscriptions for the current logged-in user.",
+        "responses": {
+          "200": {
+            "description": "List of subscriptions",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Subscription" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Subscriptions"],
+        "summary": "Subscribe to analyst",
+        "description": "Subscribe to an approved analyst. Creates a payment record and a 30-day active subscription. Upserts if previously cancelled.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["analystProfileId"],
+                "properties": {
+                  "analystProfileId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Active subscription", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Subscription" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Already subscribed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/subscriptions/{id}": {
+      "delete": {
+        "tags": ["Subscriptions"],
+        "summary": "Cancel subscription",
+        "description": "Cancel an active subscription. Sets status to CANCELLED.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Cancelled subscription", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Subscription" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get notifications",
+        "description": "Returns the latest 30 notifications for the current user.",
+        "responses": {
+          "200": {
+            "description": "Notifications list",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Notification" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Mark all as read",
+        "description": "Marks all unread notifications for the current user as read.",
+        "responses": {
+          "200": { "description": "All marked read", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get platform settings",
+        "description": "Returns all settings as a flat key-value object. Public endpoint.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Settings map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "example": { "platform_name": "SignalTribe", "maintenance_mode": "false" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Settings"],
+        "summary": "Update settings",
+        "description": "Upsert one or more settings. Requires `admin` role.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": { "type": "string" },
+                "example": { "platform_name": "SignalTribe", "maintenance_mode": "false" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/analysts": {
+      "get": {
+        "tags": ["Analysts"],
+        "summary": "List approved analysts",
+        "description": "Returns all analysts with APPROVED status. Used for discovery / subscription pages.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "List of analyst profiles",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AnalystProfile" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analysts/subscribers": {
+      "get": {
+        "tags": ["Analysts"],
+        "summary": "Get analyst's subscribers",
+        "description": "Returns subscriber count and active subscriptions for the authenticated analyst.",
+        "responses": {
+          "200": {
+            "description": "Subscriber info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "subscriptions": { "type": "array", "items": { "$ref": "#/components/schemas/Subscription" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/users/analysts": {
+      "get": {
+        "tags": ["Analysts"],
+        "summary": "Get analysts (user view)",
+        "description": "Returns approved analysts for subscription browsing. Authenticated users only.",
+        "responses": {
+          "200": {
+            "description": "List of analysts",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AnalystProfile" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/dashboard/admin": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Admin dashboard stats",
+        "description": "Returns platform-wide stats: total users, signals, subscriptions, pending analyst applications. Requires `admin` role.",
+        "responses": {
+          "200": { "description": "Admin stats", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/dashboard/analyst": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Analyst dashboard stats",
+        "description": "Returns the authenticated analyst's stats: signal counts by status, subscriber count, recent activity. Requires `analyst` role.",
+        "responses": {
+          "200": { "description": "Analyst stats", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/dashboard/user": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "User dashboard stats",
+        "description": "Returns the authenticated user's stats: active subscriptions, recent signals from followed analysts. Requires `trader` role.",
+        "responses": {
+          "200": { "description": "User stats", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin — Users"],
+        "summary": "List all users",
+        "description": "Paginated list of all platform users with search and role filter. Requires `admin` role.",
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/LimitParam" },
+          { "name": "search", "in": "query", "description": "Search by name or email", "schema": { "type": "string" } },
+          { "name": "role", "in": "query", "description": "Filter by role name", "schema": { "type": "string", "enum": ["admin", "analyst", "trader", "viewer"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedMeta" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "users": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Admin — Users"],
+        "summary": "Create user",
+        "description": "Admin-create a new user with a specified role. Requires `admin` role. Logs `USER_CREATE` to ActivityLog.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "roleName"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "roleName": { "type": "string", "enum": ["admin", "analyst", "trader", "viewer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/admin/analysts": {
+      "get": {
+        "tags": ["Admin — Analysts"],
+        "summary": "List analyst profiles by status",
+        "description": "Returns analyst profiles filtered by status. Defaults to `PENDING`. Requires `admin` role.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"], "default": "PENDING" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analyst profiles",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AnalystProfile" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/analysts/{id}": {
+      "put": {
+        "tags": ["Admin — Analysts"],
+        "summary": "Approve or reject analyst",
+        "description": "Update an analyst profile status to APPROVED or REJECTED. Sends an in-app notification to the analyst and logs the action. Requires `admin` role.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "AnalystProfile ID" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["APPROVED", "REJECTED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnalystProfile" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/admin/logs": {
+      "get": {
+        "tags": ["Admin — Logs"],
+        "summary": "Get system and activity logs",
+        "description": "Returns paginated activity or system logs. Use `type=activity` (default) or `type=system`. Requires `admin` role.",
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/LimitParam" },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["activity", "system"], "default": "activity" }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "description": "Filter activity logs by action (only for type=activity)",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "description": "Filter system logs by level (only for type=system)",
+            "schema": { "type": "string", "enum": ["error", "warn", "info"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "allOf": [
+                        { "$ref": "#/components/schemas/PaginatedMeta" },
+                        { "type": "object", "properties": { "logs": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityLog" } } } }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        { "$ref": "#/components/schemas/PaginatedMeta" },
+                        { "type": "object", "properties": { "logs": { "type": "array", "items": { "$ref": "#/components/schemas/SystemLog" } } } }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    }
+  }
+}

@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { prisma } from '../../utils/prisma'
+import { requireRole } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
+    await requireRole(event, 'admin')
     const body = await readBody(event)
     
     if (!body || typeof body !== 'object') {

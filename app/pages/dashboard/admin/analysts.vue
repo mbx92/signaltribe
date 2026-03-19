@@ -1,5 +1,6 @@
 <template>
   <div class="space-y-6">
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">Analyst Approvals</h1>
@@ -11,105 +12,89 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="card bg-base-100 border border-base-300 p-4">
         <p class="text-xs text-base-content/60 mb-1">Pending Applications</p>
-        <p class="text-2xl font-bold text-warning">5</p>
-        <p class="text-xs text-base-content/50 mt-1">Oldest: 4 days ago</p>
+        <p class="text-2xl font-bold text-warning">{{ pending.length }}</p>
+        <p class="text-xs text-base-content/50 mt-1">
+          {{ pending.length ? `Oldest: ${oldestPending}` : 'None pending' }}
+        </p>
       </div>
       <div class="card bg-base-100 border border-base-300 p-4">
         <p class="text-xs text-base-content/60 mb-1">Approved Analysts</p>
-        <p class="text-2xl font-bold">42</p>
-        <p class="text-xs text-base-content/50 mt-1">Avg win rate: 63%</p>
+        <p class="text-2xl font-bold">{{ approved.length }}</p>
+        <p class="text-xs text-base-content/50 mt-1">Active on platform</p>
       </div>
       <div class="card bg-base-100 border border-base-300 p-4">
-        <p class="text-xs text-base-content/60 mb-1">Applications This Month</p>
-        <p class="text-2xl font-bold text-primary">12</p>
-        <p class="text-xs text-success mt-1 flex items-center gap-1">
-          <IconTrendingUp class="w-3 h-3" /> +4 vs last month
-        </p>
+        <p class="text-xs text-base-content/60 mb-1">Rejected</p>
+        <p class="text-2xl font-bold text-error">{{ rejected.length }}</p>
+        <p class="text-xs text-base-content/50 mt-1">Total rejected applications</p>
       </div>
     </div>
 
-    <!-- Pending list -->
+    <!-- Pending Applications -->
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body p-4 border-b border-base-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div class="flex items-center gap-2">
           <h2 class="font-semibold text-base">Pending Applications</h2>
-          <span class="badge badge-warning badge-sm">5</span>
-        </div>
-        <div class="flex flex-wrap gap-2 md:justify-end">
-          <select class="select select-sm select-bordered w-40">
-            <option>All niches</option>
-            <option>Crypto</option>
-            <option>Forex</option>
-            <option>Stocks</option>
-            <option>Commodities</option>
-          </select>
+          <span class="badge badge-warning badge-sm">{{ pending.length }}</span>
         </div>
       </div>
       <div class="card-body p-0">
         <div class="overflow-x-auto">
           <table class="table table-sm w-full">
             <thead>
-              <tr class="bg-base-200/60 text-xs">
+              <tr class="bg-base-200/60 text-xs uppercase">
                 <th>Applicant</th>
-                <th>Niche</th>
+                <th>Specialty</th>
                 <th>Experience</th>
-                <th>Metrics (self-reported)</th>
+                <th>Monthly Price</th>
+                <th>Applied</th>
                 <th class="text-right">Actions</th>
               </tr>
             </thead>
             <tbody class="text-sm">
-              <tr class="hover">
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="avatar">
-                      <div class="w-8 h-8 rounded-full bg-base-300">
-                        <img src="https://i.pravatar.cc/150?u=david_chen" />
-                      </div>
-                    </div>
-                    <div>
-                      <p class="font-semibold text-sm">David Chen</p>
-                      <p class="text-xs text-base-content/50">Applied 2 days ago</p>
-                    </div>
-                  </div>
-                </td>
-                <td>Crypto / DeFi</td>
-                <td>7 years</td>
-                <td>
-                  <p class="text-xs">Win rate: <span class="text-success font-semibold">68%</span></p>
-                  <p class="text-xs">Avg R:R: 1:2.4</p>
-                </td>
-                <td class="text-right">
-                  <div class="flex justify-end gap-2">
-                    <button class="btn btn-xs btn-ghost text-error">Reject</button>
-                    <button class="btn btn-xs btn-primary">Approve</button>
-                  </div>
+              <tr v-if="loadingPending">
+                <td colspan="6" class="text-center py-10 text-base-content/40">
+                  <span class="loading loading-spinner loading-sm"></span>
                 </td>
               </tr>
-
-              <tr class="hover">
+              <tr v-else-if="!pending.length">
+                <td colspan="6" class="text-center py-10 text-base-content/40">
+                  <IconCircleCheck class="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p class="text-sm">No pending applications. All clear!</p>
+                </td>
+              </tr>
+              <tr v-for="a in pending" :key="a.id" class="hover">
                 <td>
                   <div class="flex items-center gap-3">
-                    <div class="avatar">
-                      <div class="w-8 h-8 rounded-full bg-base-300">
-                        <img src="https://i.pravatar.cc/150?u=elena_r" />
+                    <div class="avatar placeholder">
+                      <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                        {{ initials(a.user.name || a.user.email) }}
                       </div>
                     </div>
                     <div>
-                      <p class="font-semibold text-sm">Elena Rodriguez</p>
-                      <p class="text-xs text-base-content/50">Applied 3 days ago</p>
+                      <p class="font-semibold text-sm">{{ a.user.name || '—' }}</p>
+                      <p class="text-xs text-base-content/50">{{ a.user.email }}</p>
                     </div>
                   </div>
                 </td>
-                <td>Commodities</td>
-                <td>10 years</td>
-                <td>
-                  <p class="text-xs">Win rate: <span class="text-success font-semibold">61%</span></p>
-                  <p class="text-xs">Avg R:R: 1:3.0</p>
-                </td>
+                <td class="text-xs">{{ a.specialty || '—' }}</td>
+                <td class="text-xs">{{ a.experience ? `${a.experience} yrs` : '—' }}</td>
+                <td class="text-xs">${{ a.monthlyPrice.toFixed(2) }}/mo</td>
+                <td class="text-xs text-base-content/60">{{ timeAgo(a.createdAt) }}</td>
                 <td class="text-right">
                   <div class="flex justify-end gap-2">
-                    <button class="btn btn-xs btn-ghost text-error">Reject</button>
-                    <button class="btn btn-xs btn-primary">Approve</button>
+                    <button
+                      class="btn btn-xs btn-ghost text-error"
+                      :disabled="actionLoading === a.id"
+                      @click="openReject(a)"
+                    >Reject</button>
+                    <button
+                      class="btn btn-xs btn-primary"
+                      :disabled="actionLoading === a.id"
+                      @click="handleAction(a.id, 'APPROVED')"
+                    >
+                      <span v-if="actionLoading === a.id" class="loading loading-spinner loading-xs"></span>
+                      Approve
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -119,47 +104,194 @@
       </div>
     </div>
 
-    <!-- Existing analysts (compact) -->
+    <!-- Approved Analysts -->
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body p-4 border-b border-base-200 flex items-center justify-between">
-        <h2 class="font-semibold text-base">Existing Analysts</h2>
-        <span class="text-xs text-base-content/50">Top 5 by subscribers</span>
+        <h2 class="font-semibold text-base">Approved Analysts</h2>
+        <span class="text-xs text-base-content/50">{{ approved.length }} total</span>
       </div>
-      <div class="card-body p-4">
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="avatar">
-              <div class="w-8 h-8 rounded-full">
-                <img src="https://i.pravatar.cc/150?u=a04258a2462d826712d" />
-              </div>
-            </div>
-            <div class="grow min-w-0">
-              <p class="text-sm font-semibold">Marcus Macro</p>
-              <p class="text-xs text-base-content/50">2,100 subs · 58% win · 1:4.2 R:R</p>
-            </div>
-            <button class="btn btn-xs btn-ghost">View</button>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <div class="avatar">
-              <div class="w-8 h-8 rounded-full">
-                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" />
-              </div>
-            </div>
-            <div class="grow min-w-0">
-              <p class="text-sm font-semibold">Alex Crypto</p>
-              <p class="text-xs text-base-content/50">1,240 subs · 72% win · 1:2.4 R:R</p>
-            </div>
-            <button class="btn btn-xs btn-ghost">View</button>
-          </div>
+      <div class="card-body p-0">
+        <div class="overflow-x-auto">
+          <table class="table table-sm w-full">
+            <thead>
+              <tr class="bg-base-200/60 text-xs uppercase">
+                <th>Analyst</th>
+                <th>Specialty</th>
+                <th>Experience</th>
+                <th>Monthly Price</th>
+                <th>Subscribers</th>
+                <th>Approved</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              <tr v-if="loadingApproved">
+                <td colspan="7" class="text-center py-8 text-base-content/40">
+                  <span class="loading loading-spinner loading-sm"></span>
+                </td>
+              </tr>
+              <tr v-else-if="!approved.length">
+                <td colspan="7" class="text-center py-8 text-base-content/40">No approved analysts yet.</td>
+              </tr>
+              <tr v-for="a in approved" :key="a.id" class="hover">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                      <div class="w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-xs font-bold">
+                        {{ initials(a.user.name || a.user.email) }}
+                      </div>
+                    </div>
+                    <div>
+                      <p class="font-semibold text-sm">{{ a.user.name || '—' }}</p>
+                      <p class="text-xs text-base-content/50">{{ a.user.email }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-xs">{{ a.specialty || '—' }}</td>
+                <td class="text-xs">{{ a.experience ? `${a.experience} yrs` : '—' }}</td>
+                <td class="text-xs">${{ a.monthlyPrice.toFixed(2) }}/mo</td>
+                <td class="text-xs font-semibold">{{ a._count.subscriptions }}</td>
+                <td class="text-xs text-base-content/60">{{ formatDate(a.updatedAt) }}</td>
+                <td class="text-right">
+                  <button
+                    class="btn btn-xs btn-ghost text-error"
+                    :disabled="actionLoading === a.id"
+                    @click="openReject(a)"
+                  >Revoke</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
+
+    <!-- Reject confirmation modal -->
+    <dialog :open="!!rejectTarget" class="modal">
+      <div class="modal-box max-w-sm">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" @click="rejectTarget = null">
+          <IconX class="w-4 h-4" />
+        </button>
+        <h3 class="font-bold text-base mb-1">
+          {{ rejectTarget?.status === 'APPROVED' ? 'Revoke Analyst' : 'Reject Application' }}
+        </h3>
+        <p class="text-sm text-base-content/60 mb-4">
+          {{ rejectTarget?.status === 'APPROVED'
+            ? `This will revoke approval for ${rejectTarget?.user?.name || rejectTarget?.user?.email}.`
+            : `This will reject the application from ${rejectTarget?.user?.name || rejectTarget?.user?.email}.` }}
+        </p>
+        <p v-if="rejectError" class="text-sm text-error mb-3">{{ rejectError }}</p>
+        <div class="flex justify-end gap-2">
+          <button class="btn btn-ghost btn-sm" @click="rejectTarget = null">Cancel</button>
+          <button
+            class="btn btn-error btn-sm"
+            :disabled="actionLoading === rejectTarget?.id"
+            @click="confirmReject"
+          >
+            <span v-if="actionLoading === rejectTarget?.id" class="loading loading-spinner loading-xs"></span>
+            {{ rejectTarget?.status === 'APPROVED' ? 'Revoke' : 'Reject' }}
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="rejectTarget = null">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
-<script setup>
-import { IconTrendingUp } from '@tabler/icons-vue'
+<script setup lang="ts">
+import { IconTrendingUp, IconCircleCheck, IconX } from '@tabler/icons-vue'
 
 definePageMeta({ layout: 'dashboard' })
+
+const pending = ref<any[]>([])
+const approved = ref<any[]>([])
+const rejected = ref<any[]>([])
+const loadingPending = ref(false)
+const loadingApproved = ref(false)
+const actionLoading = ref<string | null>(null)
+const rejectTarget = ref<any>(null)
+const rejectError = ref('')
+
+const loadPending = async () => {
+  loadingPending.value = true
+  try {
+    pending.value = await $fetch<any[]>('/api/admin/analysts', { params: { status: 'PENDING' } })
+  } finally {
+    loadingPending.value = false
+  }
+}
+
+const loadApproved = async () => {
+  loadingApproved.value = true
+  try {
+    approved.value = await $fetch<any[]>('/api/admin/analysts', { params: { status: 'APPROVED' } })
+  } finally {
+    loadingApproved.value = false
+  }
+}
+
+const loadRejected = async () => {
+  rejected.value = await $fetch<any[]>('/api/admin/analysts', { params: { status: 'REJECTED' } })
+}
+
+const handleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+  actionLoading.value = id
+  try {
+    await $fetch(`/api/admin/analysts/${id}`, { method: 'PUT', body: { status } })
+    await Promise.all([loadPending(), loadApproved(), loadRejected()])
+  } finally {
+    actionLoading.value = null
+  }
+}
+
+const openReject = (analyst: any) => {
+  rejectTarget.value = analyst
+  rejectError.value = ''
+}
+
+const confirmReject = async () => {
+  if (!rejectTarget.value) return
+  actionLoading.value = rejectTarget.value.id
+  try {
+    await $fetch(`/api/admin/analysts/${rejectTarget.value.id}`, {
+      method: 'PUT',
+      body: { status: 'REJECTED' },
+    })
+    rejectTarget.value = null
+    await Promise.all([loadPending(), loadApproved(), loadRejected()])
+  } catch (err: any) {
+    rejectError.value = err?.data?.statusMessage || 'Action failed'
+  } finally {
+    actionLoading.value = null
+  }
+}
+
+const oldestPending = computed(() => {
+  if (!pending.value.length) return ''
+  const oldest = pending.value[0]
+  return timeAgo(oldest.createdAt)
+})
+
+const initials = (str: string) =>
+  str.split(/\s+/).map((w: string) => w[0]?.toUpperCase() ?? '').slice(0, 2).join('')
+
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+const timeAgo = (d: string) => {
+  const diff = Date.now() - new Date(d).getTime()
+  const days = Math.floor(diff / 86400000)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return `${days} days ago`
+}
+
+onMounted(() => {
+  loadPending()
+  loadApproved()
+  loadRejected()
+})
 </script>
+

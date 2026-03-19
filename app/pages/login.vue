@@ -101,6 +101,7 @@ const router = useRouter()
 
 const form = reactive({ email: '', password: '' })
 const error = ref('')
+const loading = ref(false)
 
 const roleBadgeClass = (role) => ({
   admin:   'badge-error',
@@ -108,18 +109,28 @@ const roleBadgeClass = (role) => ({
   user:    'badge-info',
 }[role] ?? 'badge-ghost')
 
-const submit = () => {
+const submit = async () => {
   error.value = ''
-  const redirect = loginByCredentials(form.email, form.password)
-  if (!redirect) {
-    error.value = 'Invalid email or password. Try a demo account below.'
-    return
+  loading.value = true
+  try {
+    const redirect = await loginByCredentials(form.email, form.password)
+    if (!redirect) {
+      error.value = 'Invalid email or password. Try a demo account below.'
+      return
+    }
+    router.push(redirect)
+  } finally {
+    loading.value = false
   }
-  router.push(redirect)
 }
 
-const quickLogin = (role) => {
-  const redirect = loginByRole(role)
-  router.push(redirect)
+const quickLogin = async (role) => {
+  loading.value = true
+  try {
+    const redirect = await loginByRole(role)
+    if (redirect) router.push(redirect)
+  } finally {
+    loading.value = false
+  }
 }
 </script>

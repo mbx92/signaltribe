@@ -39,7 +39,7 @@
           </div>
 
           <!-- Section rows (Draggable simulation) -->
-          <ul class="divide-y divide-base-200 min-h-[100px]">
+          <ul class="divide-y divide-base-200 min-h-25">
             <li v-if="blocks.length === 0" class="p-5 text-center text-sm text-base-content/40 italic">
               No blocks added yet. Click below to add your first section.
             </li>
@@ -555,19 +555,10 @@ const linkAnalystCard = (card, userId) => {
   }
 }
 
-const fetchSettings = async () => {
+const fetchCmsBlocks = async () => {
   try {
-    const res = await $fetch('/api/settings')
-    if (res && res.cmsBlocks) {
-      try {
-        blocks.value = JSON.parse(res.cmsBlocks)
-      } catch (e) {
-        blocks.value = []
-      }
-    } else {
-      // Default initial layout state if nothing saved
-      blocks.value = []
-    }
+    const res = await $fetch('/api/admin/cms/landing')
+    blocks.value = Array.isArray(res?.blocks) ? res.blocks : []
   } catch (err) {
     showAlert('Failed to load blocks from database', 'error')
   }
@@ -577,19 +568,16 @@ const saveBlocks = async () => {
   isLoading.value = true
   alertMessage.value = ''
   try {
-    // We stringify the array into a single DB field
-    const payload = {
-      cmsBlocks: JSON.stringify(blocks.value)
-    }
-
-    const res = await $fetch('/api/settings', {
+    await $fetch('/api/admin/cms/landing', {
       method: 'PUT',
-      body: payload
+      body: {
+        blocks: blocks.value
+      }
     })
     
     showAlert('Landing page layout published successfully!', 'success')
   } catch (err) {
-    showAlert(err.data?.message || 'Failed to publish blocks', 'error')
+    showAlert(err?.data?.statusMessage || err?.message || 'Failed to publish blocks', 'error')
   } finally {
     isLoading.value = false
   }
@@ -604,7 +592,7 @@ const showAlert = (msg, type) => {
 }
 
 onMounted(() => {
-  fetchSettings()
+  fetchCmsBlocks()
   fetchPlatformAnalysts()
 })
 </script>

@@ -12,4 +12,8 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss() as any],
   },
+  runtimeConfig: {
+    databaseUrl: process.env.DATABASE_URL || '',
+    sessionSecret: process.env.SESSION_SECRET || 'signaltribe-dev-secret-change-in-production',
+  },
 })
